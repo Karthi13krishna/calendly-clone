@@ -18,19 +18,41 @@ import { Button } from '../ui/button';
 import Link from 'next/link';
 import { Textarea } from '../ui/textarea';
 import { Switch } from '../ui/switch';
+import { createEvent, updateEvent } from '@/server/actions/events';
 
-export function EventForm() {
+export function EventForm({
+  event,
+}: {
+  event?: {
+    id: string;
+    name: string;
+    description?: string;
+    durationInMinutes: number;
+    isActive: boolean;
+  };
+}) {
   const form = useForm<z.infer<typeof eventFormSchema>>({
     resolver: zodResolver(eventFormSchema) as Resolver<
       z.infer<typeof eventFormSchema>
     >,
-    defaultValues: {
+    defaultValues: event ?? {
       isActive: true,
       durationInMinutes: 30,
+      name: '',
+      description: '',
     },
   });
 
-  function onSubmit(values: z.infer<typeof eventFormSchema>) {
+  async function onSubmit(values: z.infer<typeof eventFormSchema>) {
+    const action =
+      event == null ? createEvent : updateEvent.bind(null, event.id);
+    const data = await action(values);
+
+    if (data?.error) {
+      form.setError('root', {
+        message: 'Something went wrong',
+      });
+    }
     console.log(values);
   }
   return (
@@ -39,6 +61,11 @@ export function EventForm() {
         onSubmit={form.handleSubmit(onSubmit)}
         className="flex gap-6 flex-col"
       >
+        {form.formState.errors.root && (
+          <div className="text-destructive text-sm">
+            {form.formState.errors.root.message}
+          </div>
+        )}
         <FormField
           control={form.control}
           name="name"
