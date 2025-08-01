@@ -121,3 +121,8 @@
     font-family: var(--font-sans);
   }
 }
+
+@utility container {
+  margin-inline: auto;
+  padding: 2rem;
+}
